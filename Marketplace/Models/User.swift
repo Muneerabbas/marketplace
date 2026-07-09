@@ -5,8 +5,16 @@
 //  Created by Muneer Abass on 08/07/26.
 //
 
-struct User: Codable {
+import Foundation
+
+struct User: Codable, Identifiable {
     let id: Int
-    let name: String
-    let username: String
+    let firstName: String
+    let lastName: String
+    let email: String
+    let image: String?
+
+    var fullName: String {
+        "\(firstName) \(lastName)"
+    }
 }

@@ -8,17 +8,35 @@
 import SwiftUI
 
 struct ContentView: View {
+
+    @EnvironmentObject var auth: AuthViewModel
+
     var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
+
+        if auth.isLoggedIn {
+            // Show tabs when logged in
+            TabView {
+                HomeView()
+                    .tabItem {
+                        Label("Home", systemImage: "house.fill")
+                    }
+
+                SellProductView()
+                    .tabItem {
+                        Label("Sell", systemImage: "plus.circle.fill")
+                    }
+
+                ProfileView()
+                    .tabItem {
+                        Label("Profile", systemImage: "person.fill")
+                    }
+            }
+        } else {
+            LoginView()
         }
-        .padding()
+
     }
 }
-
 #Preview {
     ContentView()
 }
