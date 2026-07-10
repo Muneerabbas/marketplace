@@ -18,22 +18,7 @@ struct ProfileView: View {
 
                 // Profile image (loaded from url)
                 if let user = auth.currentUser {
-
-                    AsyncImage(url: URL(string: user.image ?? "")) { image in
-                        image
-                            .resizable()
-                            .scaledToFill()
-                    } placeholder: {
-                        // show a default icon while loading
-                        Image(systemName: "person.circle.fill")
-                            .resizable()
-                            .foregroundColor(.gray)
-                    }
-                    .frame(width: 120, height: 120)
-                    .clipShape(Circle())
-                    .overlay(Circle().stroke(Color.blue, lineWidth: 2))
-
-                    Text(user.fullName)
+                    Text(user.name)
                         .font(.title)
                         .fontWeight(.bold)
 
@@ -41,6 +26,10 @@ struct ProfileView: View {
                         .font(.subheadline)
                         .foregroundColor(.gray)
 
+                    Text("\(user.orders.count) orders")
+                        .font(.footnote)
+                        .foregroundColor(.secondary)
+                        .padding(.top, 4)
                 } else {
                     Text("No user logged in")
                         .foregroundColor(.gray)

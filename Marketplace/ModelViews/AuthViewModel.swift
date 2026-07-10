@@ -6,6 +6,7 @@
 //
 import SwiftUI
 import Combine
+
 @MainActor
 class AuthViewModel: ObservableObject {
 
@@ -14,6 +15,18 @@ class AuthViewModel: ObservableObject {
     @Published var errorMessage: String?
 
     private let authService = AuthService()
+
+    private let decoder: JSONDecoder = {
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        return decoder
+    }()
+
+    private let encoder: JSONEncoder = {
+        let encoder = JSONEncoder()
+        encoder.dateEncodingStrategy = .iso8601
+        return encoder
+    }()
 
     var isLoggedIn: Bool {
         currentUser != nil
@@ -24,10 +37,9 @@ class AuthViewModel: ObservableObject {
     }
 
     func login(
-        username: String,
+        email: String,
         password: String
     ) async {
-
         isLoading = true
         errorMessage = nil
 
@@ -36,52 +48,77 @@ class AuthViewModel: ObservableObject {
         }
 
         do {
-
             let response = try await authService.login(
-                username: username,
+                email: email,
                 password: password
             )
 
-            currentUser = response.user
+            saveSession(token: response.token, user: response.user)
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
 
-            UserDefaults.standard.set(
-                response.accessToken,
-                forKey: "accessToken"
+    func signup(
+        name: String,
+        email: String,
+        password: String
+    ) async {
+        isLoading = true
+        errorMessage = nil
+
+        defer {
+            isLoading = false
+        }
+
+        do {
+            let response = try await authService.signup(
+                name: name,
+                email: email,
+                password: password
             )
 
+            saveSession(token: response.token, user: response.user)
         } catch {
-
             errorMessage = error.localizedDescription
-
         }
+    }
+
+    func updateCurrentUser(_ user: User) {
+        currentUser = user
+        persistUser(user)
     }
 
     func logout() {
-
-        UserDefaults.standard.removeObject(
-            forKey: "accessToken"
-        )
-
+        UserDefaults.standard.removeObject(forKey: "accessToken")
+        UserDefaults.standard.removeObject(forKey: "currentUser")
         currentUser = nil
+    }
 
+    private func saveSession(token: String, user: User) {
+        currentUser = user
+        UserDefaults.standard.set(token, forKey: "accessToken")
+        persistUser(user)
+    }
+
+    private func persistUser(_ user: User) {
+        guard let data = try? encoder.encode(user) else { return }
+        UserDefaults.standard.set(data, forKey: "currentUser")
     }
 
     private func checkLoginStatus() {
-
-        if UserDefaults.standard.string(
-            forKey: "accessToken"
-        ) != nil {
-
-            // For demo purposes
-            currentUser = User(
-                   id: 1,
-                   firstName: "Emily",
-                   lastName: "Johnson",
-                   email: "emily.johnson@x.dummyjson.com",
-                   image: "https://dummyjson.com/icon/emilys/128"
-            )
-
+        guard UserDefaults.standard.string(forKey: "accessToken") != nil,
+              let data = UserDefaults.standard.data(forKey: "currentUser")
+        else {
+            return
         }
 
+        do {
+            currentUser = try decoder.decode(User.self, from: data)
+        } catch {
+            // Clear stale session data if the saved user can't be read
+            UserDefaults.standard.removeObject(forKey: "accessToken")
+            UserDefaults.standard.removeObject(forKey: "currentUser")
+        }
     }
 }

@@ -9,30 +9,29 @@ import SwiftUI
 
 struct SellProductView: View {
     @EnvironmentObject var store: ProductStore
+    @EnvironmentObject var auth: AuthViewModel
 
     @State private var name: String = ""
-    @State private var category: String = ""
     @State private var price: String = ""
     @State private var description: String = ""
     @State private var selectedLocation: String = "Jaipur"
     @State private var selectedCategory = "Electronics"
-
-
-    // to show a little success message after adding
     @State private var showSuccess: Bool = false
+    @State private var isSubmitting = false
+
     let locations: [String] = [
-          "Jaipur",
-          "Mobiles",
-          "Cars",
-          "Furniture",
-          "Fashion"
-      ]
+        "Jaipur", "Srinagar", "Mumbai", "Delhi", "Pune",
+        "Bengaluru", "Hyderabad", "Chennai", "Kolkata"
+    ]
+
     let categories = [
         "Electronics",
         "Mobiles",
-        "Cars",
-        "Furniture",
-        "Fashion"
+        "Audio",
+        "Gaming",
+        "Cameras",
+        "Wearables",
+        "Accessories"
     ]
 
     var body: some View {
@@ -40,43 +39,54 @@ struct SellProductView: View {
             Form {
                 Section("Product Info") {
                     TextField("Product name", text: $name)
-                    TextField("Category", text: $category)
                     TextField("Price", text: $price)
                         .keyboardType(.decimalPad)
-                    
+
                     Picker("Category", selection: $selectedCategory) {
                         ForEach(categories, id: \.self) { category in
                             Text(category)
                         }
                     }
                     .pickerStyle(.menu)
-                    
-
                 }
 
                 Section("Description") {
                     TextField("Write something about it...", text: $description, axis: .vertical)
                         .lineLimit(3, reservesSpace: true)
                 }
+
                 Section("Location") {
                     Picker("Location", selection: $selectedLocation) {
-                               ForEach(locations, id: \.self) { location in
-                                   Text(location)
-                               }
-                           }
-                           .pickerStyle(.menu)
-
+                        ForEach(locations, id: \.self) { location in
+                            Text(location)
+                        }
+                    }
+                    .pickerStyle(.menu)
                 }
-                
+
+                if let error = store.errorMessage {
+                    Section {
+                        Text(error)
+                            .foregroundColor(.red)
+                    }
+                }
+
                 Section {
                     Button {
-                        addProduct()
+                        Task {
+                            await addProduct()
+                        }
                     } label: {
-                        Text("Add Product")
-                            .frame(maxWidth: .infinity)
-                            .fontWeight(.semibold)
+                        if isSubmitting {
+                            ProgressView()
+                                .frame(maxWidth: .infinity)
+                        } else {
+                            Text("Add Product")
+                                .frame(maxWidth: .infinity)
+                                .fontWeight(.semibold)
+                        }
                     }
-                    .disabled(!isFormValid())
+                    .disabled(!isFormValid() || isSubmitting)
                 }
 
                 if showSuccess {
@@ -88,35 +98,42 @@ struct SellProductView: View {
         }
     }
 
-    // Only allow adding if name and price are filled and price is a number
     func isFormValid() -> Bool {
-        return !name.isEmpty && Double(price) != nil
+        !name.isEmpty && Double(price) != nil && auth.currentUser != nil
     }
 
-    func addProduct() {
+    func addProduct() async {
+        guard let user = auth.currentUser,
+              let priceValue = Double(price)
+        else {
+            return
+        }
 
-        // price is a string so we convert it to a number
-        let priceValue = Double(price) ?? 0.0
+        isSubmitting = true
+        showSuccess = false
 
-        store.addProduct(
+        let success = await store.addProduct(
             name: name,
-            category: category.isEmpty ? "Other" : category,
+            category: selectedCategory,
             price: priceValue,
             description: description,
-            location: selectedLocation
+            location: selectedLocation,
+            sellerId: user.id
         )
 
-        // clear the form
-        name = ""
-        category = ""
-        price = ""
-        description = ""
+        isSubmitting = false
 
-        showSuccess = true
+        if success {
+            name = ""
+            price = ""
+            description = ""
+            showSuccess = true
+        }
     }
 }
 
 #Preview {
     SellProductView()
         .environmentObject(ProductStore())
+        .environmentObject(AuthViewModel())
 }

@@ -8,28 +8,65 @@
 import SwiftUI
 import Combine
 
-// Holds all the products so the whole app can share the same list.
-// When we add a product here the Home screen updates automatically.
+@MainActor
 class ProductStore: ObservableObject {
 
-    @Published var products: [Product] = Product.sampleProducts
+    @Published var products: [Product] = []
+    @Published var isLoading = false
+    @Published var errorMessage: String?
 
-    func addProduct(name: String, category: String, price: Double, description: String, location: String) {
+    private let productService = ProductService()
 
-        // Make a new id (one bigger than the current biggest id)
-        let newId = (products.map { $0.id }.max() ?? 0) + 1
+    func fetchProducts() async {
+        isLoading = true
+        errorMessage = nil
 
-        let newProduct = Product(
-            id: newId,
-            name: name,
-            category: category,
-            price: price,
-            icon: "shippingbox.fill",   // default icon for user added items
-            description: description,
-            location: location,
+        defer {
+            isLoading = false
+        }
 
-        )
+        do {
+            products = try await productService.fetchProducts()
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
 
-        products.append(newProduct)
+    func addProduct(
+        name: String,
+        category: String,
+        price: Double,
+        description: String,
+        location: String,
+        sellerId: String
+    ) async -> Bool {
+        errorMessage = nil
+
+        do {
+            let product = try await productService.createProduct(
+                name: name,
+                category: category,
+                price: price,
+                description: description,
+                location: location,
+                sellerId: sellerId
+            )
+            products.insert(product, at: 0)
+            return true
+        } catch {
+            errorMessage = error.localizedDescription
+            return false
+        }
+    }
+
+    func purchaseProduct(productId: String, userId: String) async -> User? {
+        errorMessage = nil
+
+        do {
+            return try await productService.purchaseProduct(userId: userId, productId: productId)
+        } catch {
+            errorMessage = error.localizedDescription
+            return nil
+        }
     }
 }

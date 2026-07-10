@@ -24,7 +24,7 @@ struct CategoryView: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 40, height: 40)
-                        .foregroundColor(.blue)
+                        .foregroundColor(.red)
 
                     VStack(alignment: .leading, spacing: 4) {
                         Text(product.name)

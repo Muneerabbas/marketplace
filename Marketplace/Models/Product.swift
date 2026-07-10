@@ -7,8 +7,8 @@
 
 import Foundation
 
-struct Product: Identifiable {
-    let id: Int
+struct Product: Codable, Identifiable {
+    let id: String
     let name: String
     let category: String
     let price: Double
@@ -16,9 +16,21 @@ struct Product: Identifiable {
     let description: String
     let location: String
 
+    // The backend calls the id field "_id", so we map it to "id" here.
+    // Any extra fields the API sends (seller, createdAt...) are just ignored.
+    enum CodingKeys: String, CodingKey {
+        case id = "_id"
+        case name
+        case category
+        case price
+        case icon
+        case description
+        case location
+    }
+
     static let sampleProducts: [Product] = [
         Product(
-            id: 1,
+            id: "1",
             name: "iPhone 15 Pro",
             category: "Mobiles",
             price: 89999,
@@ -27,7 +39,7 @@ struct Product: Identifiable {
             location: "Srinagar"
         ),
         Product(
-            id: 2,
+            id: "2",
             name: "MacBook Air M2",
             category: "Electronics",
             price: 74999,
@@ -36,7 +48,7 @@ struct Product: Identifiable {
             location: "Pune"
         ),
         Product(
-            id: 3,
+            id: "3",
             name: "AirPods Pro (2nd Gen)",
             category: "Audio",
             price: 14999,
@@ -45,7 +57,7 @@ struct Product: Identifiable {
             location: "Mumbai"
         ),
         Product(
-            id: 4,
+            id: "4",
             name: "Apple Watch Series 9",
             category: "Wearables",
             price: 29999,
@@ -54,7 +66,7 @@ struct Product: Identifiable {
             location: "Delhi"
         ),
         Product(
-            id: 5,
+            id: "5",
             name: "iPad Air M2",
             category: "Tablets",
             price: 55999,
@@ -63,7 +75,7 @@ struct Product: Identifiable {
             location: "Bengaluru"
         ),
         Product(
-            id: 6,
+            id: "6",
             name: "Mechanical Keyboard",
             category: "Accessories",
             price: 4999,
@@ -72,7 +84,7 @@ struct Product: Identifiable {
             location: "Hyderabad"
         ),
         Product(
-            id: 7,
+            id: "7",
             name: "Sony WH-1000XM5",
             category: "Audio",
             price: 21999,
@@ -81,7 +93,7 @@ struct Product: Identifiable {
             location: "Chennai"
         ),
         Product(
-            id: 8,
+            id: "8",
             name: "Gaming Monitor 27\"",
             category: "Gaming",
             price: 17999,
@@ -90,7 +102,7 @@ struct Product: Identifiable {
             location: "Ahmedabad"
         ),
         Product(
-            id: 9,
+            id: "9",
             name: "PlayStation 5",
             category: "Gaming",
             price: 44999,
@@ -99,7 +111,7 @@ struct Product: Identifiable {
             location: "Kolkata"
         ),
         Product(
-            id: 10,
+            id: "10",
             name: "Canon EOS R50",
             category: "Cameras",
             price: 62999,

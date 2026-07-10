@@ -1,21 +1,20 @@
 //
-//  LoginView.swift
+//  SignupView.swift
 //  Marketplace
 //
 //  Created by Muneer Abass on 08/07/26.
 //
 
-
-
 import SwiftUI
 
-struct LoginView: View {
+struct SignupView: View {
     @EnvironmentObject var auth: AuthViewModel
-    @State private var username: String = ""
+
+    @State private var name: String = ""
+    @State private var email: String = ""
     @State private var password: String = ""
 
     var body: some View {
-        NavigationStack {
         VStack(spacing: 20) {
 
             Spacer()
@@ -27,22 +26,33 @@ struct LoginView: View {
                 .frame(width: 70, height: 70)
                 .foregroundColor(.red)
 
-            Text("Welcome Back")
+            Text("Create Account")
                 .font(.largeTitle)
                 .fontWeight(.bold)
 
-            Text("Login to continue shopping")
+            Text("Sign up to start shopping")
                 .font(.subheadline)
                 .foregroundColor(.gray)
                 .padding(.bottom, 20)
 
-            // Username field
+            // Name field
             HStack {
                 Image(systemName: "person.fill")
                     .foregroundColor(.gray)
-                TextField("Email", text: $username)
+                TextField("Name", text: $name)
+            }
+            .padding()
+            .background(Color(.systemGray6))
+            .cornerRadius(10)
+
+            // Email field
+            HStack {
+                Image(systemName: "envelope.fill")
+                    .foregroundColor(.gray)
+                TextField("Email", text: $email)
                     .autocorrectionDisabled(true)
                     .textInputAutocapitalization(.never)
+                    .keyboardType(.emailAddress)
             }
             .padding()
             .background(Color(.systemGray6))
@@ -65,11 +75,10 @@ struct LoginView: View {
                     .foregroundColor(.red)
             }
 
-            // Login button
+            // Sign up button
             Button {
                 Task {
-                    await auth.login(email: username, password: password)
-
+                    await auth.signup(name: name, email: email, password: password)
                 }
             } label: {
                 if auth.isLoading {
@@ -77,7 +86,7 @@ struct LoginView: View {
                         .frame(maxWidth: .infinity)
                         .padding()
                 } else {
-                    Text("Login")
+                    Text("Sign Up")
                         .fontWeight(.semibold)
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity)
@@ -89,24 +98,17 @@ struct LoginView: View {
             .disabled(auth.isLoading)
             .padding(.top, 10)
 
-            // Go to the sign up screen
-            NavigationLink {
-                SignupView()
-            } label: {
-                Text("Don't have an account? Sign Up")
-                    .font(.footnote)
-                    .foregroundColor(.red)
-            }
-            .padding(.top, 4)
-
             Spacer()
         }
         .padding()
-        }
+        .navigationTitle("Sign Up")
+        .navigationBarTitleDisplayMode(.inline)
     }
 }
 
 #Preview {
-    LoginView()
-        .environmentObject(AuthViewModel())
+    NavigationStack {
+        SignupView()
+            .environmentObject(AuthViewModel())
+    }
 }

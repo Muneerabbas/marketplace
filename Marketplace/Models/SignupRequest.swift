@@ -1,5 +1,5 @@
 //
-//  LoginRequest.swift
+//  SignupRequest.swift
 //  Marketplace
 //
 //  Created by Muneer Abass on 08/07/26.
@@ -7,7 +7,8 @@
 
 import Foundation
 
-struct LoginRequest: Codable {
+struct SignupRequest: Codable {
+    let name: String
     let email: String
     let password: String
 }

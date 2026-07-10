@@ -15,12 +15,13 @@ struct HomeView: View {
     @State var selectedLocation: String = "All"
     @State var searchText = ""
 
+    // Locations to show in the dropdown
     let locations = [
         "All", "Srinagar", "Mumbai", "Delhi", "Pune",
         "Bengaluru", "Hyderabad", "Chennai", "Jaipur", "Kolkata"
     ]
 
-    
+    // Categories shown as boxes. Each has a name and an SF Symbol icon.
     let categories: [(name: String, icon: String)] = [
         ("Mobiles", "iphone"),
         ("Electronics", "laptopcomputer"),
@@ -74,13 +75,13 @@ struct HomeView: View {
                                     VStack(spacing: 8) {
                                         Image(systemName: category.icon)
                                             .font(.title2)
-                                            .foregroundColor(.blue)
+                                            .foregroundColor(.red)
                                         Text(category.name)
                                             .font(.caption)
                                             .foregroundColor(.primary)
                                     }
                                     .frame(width: 80, height: 80)
-                                    .background(Color.blue.opacity(0.1))
+                                    .background(Color.red.opacity(0.1))
                                     .cornerRadius(12)
                                 }
                                 .buttonStyle(.plain)
@@ -92,35 +93,57 @@ struct HomeView: View {
 
                 // Product list
                 Section("Products") {
-                    ForEach(filteredProducts) { product in
-                        NavigationLink(destination: ProductDetailView(product: product)) {
-                            HStack(spacing: 16) {
-                                Image(systemName: product.icon)
-                                    .resizable()
-                                    .scaledToFit()
-                                    .frame(width: 40, height: 40)
-                                    .foregroundColor(.blue)
+                    if let error = store.errorMessage, store.products.isEmpty {
+                        Text(error)
+                            .foregroundColor(.red)
+                    }
 
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text(product.name)
+                    if store.isLoading {
+                        ProgressView()
+                            .frame(maxWidth: .infinity)
+                    } else if filteredProducts.isEmpty {
+                        Text("No products found")
+                            .foregroundColor(.gray)
+                    } else {
+                        ForEach(filteredProducts) { product in
+                            NavigationLink(destination: ProductDetailView(product: product)) {
+                                HStack(spacing: 16) {
+                                    Image(systemName: product.icon)
+                                        .resizable()
+                                        .scaledToFit()
+                                        .frame(width: 40, height: 40)
+                                        .foregroundColor(.red)
+
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        Text(product.name)
+                                            .font(.headline)
+                                        Text(product.location)
+                                            .font(.subheadline)
+                                            .foregroundColor(.gray)
+                                    }
+
+                                    Spacer()
+
+                                    Text("$\(product.price, specifier: "%.0f")")
                                         .font(.headline)
-                                    Text(product.location)
-                                        .font(.subheadline)
-                                        .foregroundColor(.gray)
+                                        .foregroundColor(.green)
                                 }
-
-                                Spacer()
-
-                                Text("$\(product.price, specifier: "%.0f")")
-                                    .font(.headline)
-                                    .foregroundColor(.green)
+                                .padding(.vertical, 6)
                             }
-                            .padding(.vertical, 6)
                         }
                     }
                 }
             }
             .navigationTitle("Marketplace")
+            .refreshable {
+                await store.fetchProducts()
+            }
+            .task {
+                // Load products the first time the screen appears
+                if store.products.isEmpty {
+                    await store.fetchProducts()
+                }
+            }
         }
     }
 }
